@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Simple Map</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 600px;
+      }
+      /* Optional: Makes the sample page fill the window. */
+/*      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }*/
+    </style>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  </head>
+  <body>
+    <p><div id="message">hello</div></p>
+    <div id="map"></div>
+    <script>
+		var map;
+		var markers = [];
+	  
+		function initMap() {
+			map = new google.maps.Map(document.getElementById('map'), {
+				center: {lat: -27.641270, lng: 153.049400},
+				zoom: 15
+			});
+
+			var trafficLayer = new google.maps.TrafficLayer();
+			trafficLayer.setMap(map);
+
+			update_map();
+			var myVar = setInterval(update_map, 10000);
+
+
+			  
+			// Adds a marker to the map and push to the array.
+			function addMarker(objlat, objlng) {
+				var marker = new google.maps.Marker({
+					position: {lat: objlat, lng: objlng},
+					map: map
+				});
+				markers.push(marker);
+			}
+			  
+			// Sets the map on all markers in the array.
+			function setMapOnAll(map) {
+				for (var i = 0; i < markers.length; i++) {
+					markers[i].setMap(map);
+				}
+			}
+
+			// Removes the markers from the map, but keeps them in the array.
+			function clearMarkers() {
+				setMapOnAll(null);
+			}
+
+			// Shows any markers currently in the array.
+			function showMarkers() {
+				setMapOnAll(map);
+			}
+
+			// Deletes all markers in the array by removing references to them.
+			function deleteMarkers() {
+				clearMarkers();
+				markers = [];
+			}
+	  
+			function update_map() {
+		  		
+				var yourVariable;
+					
+				$.get("gtfs.php", function(data, status){
+					yourVariable = data;
+					//alert(data);
+					//var obj = JQuery.parseJSON(data);
+					var obj = JSON.parse(data);
+		//			alert(obj[0].lat);
+					$('#message').text(data);
+					
+					deleteMarkers();
+					var map_centered = false;
+					
+					for (var i in obj)
+					{
+		//				 var objlat = obj[i].lat;
+			//			 var objlng = obj[i].lng;
+						 
+						addMarker(obj[i].lat, obj[i].lng);
+				//		var marker = new google.maps.Marker({
+					//	  position: {lat: objlat, lng: objlng},
+						//  map: map,
+		//				  title: 'Hello World!'
+			//			});
+						 
+						 if (!map_centered)
+						 {
+							map.setCenter(markers[0].getPosition());
+							map_centered = true;
+						 }
+					}
+					
+				});		
+			}
+		} 
+	  
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxmL_c2vxX1_sPMWqs2QJlodEDJb5G_ZA&callback=initMap"
+    async defer></script>
+  </body>
+</html>
