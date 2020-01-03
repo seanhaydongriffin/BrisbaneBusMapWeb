@@ -24,8 +24,23 @@
     <div id="map"></div>
     <script>
 		var map;
-		var markers = [];
-	  
+		var route_markers = [];
+		var bus_markers = [];
+		var my_route_id = "";
+		
+		var my_service_short_name = "130";
+//		var my_service_period = "Weekday";
+		var my_service_period = "Saturday";
+		var my_service_direction = "0";
+		var my_stop_id = "10763";
+
+/*		
+		var my_service_short_name = "GLKN";
+//		var my_service_period = "Weekday";
+		var my_service_period = "Saturday";
+		var my_service_direction = "0";
+		var my_stop_id = "600801";
+*/
 		function initMap() {
 			map = new google.maps.Map(document.getElementById('map'), {
 				center: {lat: -27.641270, lng: 153.049400},
@@ -35,75 +50,147 @@
 			var trafficLayer = new google.maps.TrafficLayer();
 			trafficLayer.setMap(map);
 
-			update_map();
-			var myVar = setInterval(update_map, 10000);
+			// get my route id
+			
+			
+//			var input_data = {serviceShortName: '" + my_service_short_name + "', servicePeriod: '" + my_service_period + "', serviceDirection: '" + my_service_direction + "'};
+			var input_data = {serviceShortName: my_service_short_name, servicePeriod: my_service_period, serviceDirection: my_service_direction};
+		//	alert(input_data);
+			
+			$.post("get_route_id.php", input_data, function(data, status){
+				my_route_id = data.trim();
+//				alert("aaa"+my_route_id+"bbb");
+				
+				// add the route markers
+				
+						
+				$.post("get_stops.php", input_data, function(data, status){
+			//		alert(data);
+					//var obj = JQuery.parseJSON(data);
+					var obj = JSON.parse(data);
+		//			alert(obj[0].lat);
+		//			$('#message').text(data);
+					
+		//			deleteMarkers();
+					
+					for (var i in obj)
+					{
+						 
+						addRouteMarker(parseFloat(obj[i].lat), parseFloat(obj[i].lng));
+
+						if (obj[i].id == my_stop_id)
+						{
+							map.setCenter({lat: parseFloat(obj[i].lat), lng: parseFloat(obj[i].lng)});
+						}
+					}
+					
+				});		
+				
+				
+				
+				
+				update_map();
+				var myVar = setInterval(update_map, 10000);
+				
+				
+			});		
+			
+			
 
 
 			  
 			// Adds a marker to the map and push to the array.
-			function addMarker(objlat, objlng) {
+			function addRouteMarker(objlat, objlng) {
+			
+				var image = 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png';
+
 				var marker = new google.maps.Marker({
 					position: {lat: objlat, lng: objlng},
-					map: map
+					map: map,
+					icon: image
 				});
-				markers.push(marker);
+				route_markers.push(marker);
 			}
 			  
 			// Sets the map on all markers in the array.
-			function setMapOnAll(map) {
-				for (var i = 0; i < markers.length; i++) {
-					markers[i].setMap(map);
+			function setMapOnAllRouteMarkers(map) {
+				for (var i = 0; i < route_markers.length; i++) {
+					route_markers[i].setMap(map);
 				}
 			}
 
 			// Removes the markers from the map, but keeps them in the array.
-			function clearMarkers() {
-				setMapOnAll(null);
+			function clearRouteMarkers() {
+				setMapOnAllRouteMarkers(null);
 			}
 
 			// Shows any markers currently in the array.
-			function showMarkers() {
-				setMapOnAll(map);
+			function showRouteMarkers() {
+				setMapOnAllRouteMarkers(map);
 			}
 
 			// Deletes all markers in the array by removing references to them.
-			function deleteMarkers() {
-				clearMarkers();
-				markers = [];
+			function deleteRouteMarkers() {
+				clearRouteMarkers();
+				route_markers = [];
+			}
+			  
+			// Adds a marker to the map and push to the array.
+			function addBusMarker(objlat, objlng) {
+				var marker = new google.maps.Marker({
+					position: {lat: objlat, lng: objlng},
+					map: map
+				});
+				bus_markers.push(marker);
+			}
+			  
+			// Sets the map on all markers in the array.
+			function setMapOnAllBusMarkers(map) {
+				for (var i = 0; i < bus_markers.length; i++) {
+					bus_markers[i].setMap(map);
+				}
+			}
+
+			// Removes the markers from the map, but keeps them in the array.
+			function clearBusMarkers() {
+				setMapOnAllBusMarkers(null);
+			}
+
+			// Shows any markers currently in the array.
+			function showBusMarkers() {
+				setMapOnAllBusMarkers(map);
+			}
+
+			// Deletes all markers in the array by removing references to them.
+			function deleteBusMarkers() {
+				clearBusMarkers();
+				bus_markers = [];
 			}
 	  
 			function update_map() {
 		  		
-				var yourVariable;
-					
-				$.get("gtfs.php", function(data, status){
-					yourVariable = data;
-					//alert(data);
+				var input_data = {serviceShortName: my_route_id};
+//				alert(my_route_id);
+				
+				$.post("get_buses.php", input_data, function(data, status){
+//					alert(data);
 					//var obj = JQuery.parseJSON(data);
 					var obj = JSON.parse(data);
 		//			alert(obj[0].lat);
 					$('#message').text(data);
 					
-					deleteMarkers();
+					deleteBusMarkers();
 					var map_centered = false;
 					
 					for (var i in obj)
 					{
-		//				 var objlat = obj[i].lat;
-			//			 var objlng = obj[i].lng;
+						addBusMarker(parseFloat(obj[i].lat), parseFloat(obj[i].lng));
 						 
-						addMarker(obj[i].lat, obj[i].lng);
-				//		var marker = new google.maps.Marker({
-					//	  position: {lat: objlat, lng: objlng},
-						//  map: map,
-		//				  title: 'Hello World!'
-			//			});
-						 
-						 if (!map_centered)
-						 {
-							map.setCenter(markers[0].getPosition());
-							map_centered = true;
-						 }
+//						 if (!map_centered)
+	//					 {
+		//					map.setCenter(bus_markers[0].getPosition());
+			//				map_centered = true;
+				//		 }
 					}
 					
 				});		
