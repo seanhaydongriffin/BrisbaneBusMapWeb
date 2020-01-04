@@ -16,21 +16,53 @@
         margin: 0;
         padding: 0;
       }*/
+	  
+	  table {
+	    border-collapse: collapse;
+		}
+	  
+	  td, th {
+		  border: 1px solid;
+		  text-align: left;
+		}
+	  
     </style>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   </head>
   <body>
     <p><div id="message">hello</div></p>
     <div id="map"></div>
+	<br>
+	<table id="my-table">
+		<thead>
+			<tr><th>My Service Name</th><th>My Service Period</th><th>My Service Direction</th><th>My Stop #</th><th>My Stop Seq #</th></tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
+	<br>
+	<table id="data-table">
+		<thead>
+			<tr><th>Vehicle ID</th><th>Direction</th><th>Lat</th><th>Lng</th><th>Next Stop #</th><th>Next Stop Seq #</th><th>Distance</th><th>Est. Arrival</th></tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
+
     <script>
 		var map;
 		var route_markers = [];
 		var bus_markers = [];
 		var my_route_id = "";
+		var my_stop_sequence = "";
+		var my_stop_lat;
+		var my_stop_lng;
+		var my_stops;
 		
 		var my_service_short_name = "130";
 //		var my_service_period = "Weekday";
 		var my_service_period = "Saturday";
+//		var my_service_period = "Sunday";
 		var my_service_direction = "0";
 		var my_stop_id = "10763";
 
@@ -39,7 +71,7 @@
 //		var my_service_period = "Weekday";
 		var my_service_period = "Saturday";
 		var my_service_direction = "0";
-		var my_stop_id = "600801";
+		var my_stop_id = "600821";
 */
 		function initMap() {
 			map = new google.maps.Map(document.getElementById('map'), {
@@ -66,33 +98,38 @@
 						
 				$.post("get_stops.php", input_data, function(data, status){
 			//		alert(data);
-					//var obj = JQuery.parseJSON(data);
-					var obj = JSON.parse(data);
-		//			alert(obj[0].lat);
+					//var my_stops = JQuery.parseJSON(data);
+					my_stops = JSON.parse(data);
+		//			alert(my_stops[0].lat);
 		//			$('#message').text(data);
 					
 		//			deleteMarkers();
 					
-					for (var i in obj)
+					for (var i in my_stops)
 					{
 						 
-						addRouteMarker(parseFloat(obj[i].lat), parseFloat(obj[i].lng));
 
-						if (obj[i].id == my_stop_id)
+						if (my_stops[i].id == my_stop_id)
 						{
-							map.setCenter({lat: parseFloat(obj[i].lat), lng: parseFloat(obj[i].lng)});
+							my_stop_sequence = my_stops[i].sequence;
+							my_stop_lat = my_stops[i].lat;
+							my_stop_lng = my_stops[i].lng;
+							addRouteMarker(parseFloat(my_stops[i].lat), parseFloat(my_stops[i].lng), 1, my_stops[i].sequence);
+							map.setCenter({lat: parseFloat(my_stops[i].lat), lng: parseFloat(my_stops[i].lng)});
+						} else
+						{
+							addRouteMarker(parseFloat(my_stops[i].lat), parseFloat(my_stops[i].lng), 0.5, my_stops[i].sequence);
+
 						}
 					}
 					
+//					$('#my-table').children('tbody').html('<tr><td>' + my_service_short_name + '</td><td>' + my_service_period + '</td><td>' + my_service_direction + '</td><td>' + my_stop_id + '</td><td>' + my_stop_sequence + '</td></tr>');
+					$('#my-table').children('tbody').html('<tr><td>' + my_service_short_name + '</td><td>' + my_service_period + '</td><td>' + my_service_direction + '</td><td>' + my_stop_id + '</td><td>' + my_stop_sequence + '</td></tr>');
+
+				
+					update_map();
+					var myVar = setInterval(update_map, 10000);
 				});		
-				
-				
-				
-				
-				update_map();
-				var myVar = setInterval(update_map, 10000);
-				
-				
 			});		
 			
 			
@@ -100,15 +137,19 @@
 
 			  
 			// Adds a marker to the map and push to the array.
-			function addRouteMarker(objlat, objlng) {
+			function addRouteMarker(objlat, objlng, opacity, stopid) {
 			
 				var image = 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png';
 
 				var marker = new google.maps.Marker({
 					position: {lat: objlat, lng: objlng},
+					label: stopid,
 					map: map,
 					icon: image
 				});
+				
+				marker.setOpacity(opacity);
+				
 				route_markers.push(marker);
 			}
 			  
@@ -136,9 +177,10 @@
 			}
 			  
 			// Adds a marker to the map and push to the array.
-			function addBusMarker(objlat, objlng) {
+			function addBusMarker(objlat, objlng, label2) {
 				var marker = new google.maps.Marker({
 					position: {lat: objlat, lng: objlng},
+					label: label2,
 					map: map
 				});
 				bus_markers.push(marker);
@@ -167,31 +209,110 @@
 				bus_markers = [];
 			}
 	  
+	  
+			function setNoItemsInfo()
+			{
+				if ($('#data-table').length < 1)
+				
+					return; //not configured.
+				
+				if ($('#data-table').children('tbody').length > 0)
+				
+					$('#data-table').children('tbody').html("");
+				else
+				
+					$('#data-table').append('<tbody></tbody>');
+			}	  
+				  
+			function loadTable(tableId, fields, data)
+			{
+				var rows = '';
+				
+				$.each(data, function(index, item)
+				{
+					if (item['direction'] == my_service_direction)
+					{
+						var row = '<tr>';
+						
+						$.each(fields, function(index, field)
+						{
+							row += '<td>' + item[field+''] + '</td>';
+						});
+						
+						rows += row + '<tr>';
+					}
+				});
+				
+				$('#' + tableId).children('tbody').html(rows);
+			}	  
+	  
 			function update_map() {
 		  		
-				var input_data = {serviceShortName: my_route_id};
-//				alert(my_route_id);
+				var input_data = {serviceShortName: my_route_id, myLat: my_stop_lat, myLng: my_stop_lng};
+//				alert("aaa"+my_route_id+"bbb");
 				
 				$.post("get_buses.php", input_data, function(data, status){
-//					alert(data);
-					//var obj = JQuery.parseJSON(data);
 					var obj = JSON.parse(data);
-		//			alert(obj[0].lat);
-					$('#message').text(data);
+//					$('#message').text(data);
 					
 					deleteBusMarkers();
 					var map_centered = false;
+
 					
 					for (var i in obj)
 					{
-						addBusMarker(parseFloat(obj[i].lat), parseFloat(obj[i].lng));
-						 
+						// if the bus is going in my direction
+						
+						if (obj[i].direction == my_service_direction)
+						{					
+							var bus_before_my_stop = false;
+							
+							for (var j in my_stops)
+							{
+								// is the buses next stop is found in the list of stops
+								
+								if (my_stops[j].id == obj[i].stop_id)
+								{
+									obj[i].stop_sequence = my_stops[j].sequence;
+								
+									// if the buses next stop sequence is lower than my bus stops sequence then we can catch this bus
+									if (parseInt(obj[i].stop_sequence) <= parseInt(my_stop_sequence))
+									
+										bus_before_my_stop = true;
+									
+								}
+							}
+							
+							if (bus_before_my_stop)
+							
+								addBusMarker(parseFloat(obj[i].lat), parseFloat(obj[i].lng), obj[i].id);
+							else
+							
+								obj[i].arrival_time = '';
+								
+							obj[i].distance = obj[i].distance + " m";
+//							addBusMarker(parseFloat(obj[i].lat), parseFloat(obj[i].lng), obj[i].stop_id);
+//							addBusMarker(parseFloat(obj[i].lat), parseFloat(obj[i].lng), obj[i].direction);
+						}
+	
+					
+	/*				
+						if (obj[i].direction == my_service_direction)
+						
+							addBusMarker(parseFloat(obj[i].lat), parseFloat(obj[i].lng), obj[i].stop_id);
+//							addBusMarker(parseFloat(obj[i].lat), parseFloat(obj[i].lng), obj[i].direction);
+		*/
 //						 if (!map_centered)
 	//					 {
 		//					map.setCenter(bus_markers[0].getPosition());
 			//				map_centered = true;
 				//		 }
 					}
+					
+					setNoItemsInfo();
+					loadTable('data-table', ['id', 'direction', 'lat', 'lng', 'stop_id', 'stop_sequence', 'distance', 'arrival_time'], obj);
+
+
 					
 				});		
 			}

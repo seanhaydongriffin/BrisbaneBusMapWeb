@@ -1,7 +1,7 @@
  <?php
 $servername = "localhost";
 $username = "id12111839_sean";
-$password = "x";
+$password = "";
 $dbname = "id12111839_bus";
 
 //echo $_POST['serviceShortName'];
