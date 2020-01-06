@@ -30,103 +30,127 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   </head>
   <body>
-    <p><div id="message">hello</div></p>
+    <div id="message"></div>
+	<table id="summary">
+		<thead>
+			<tr><th>My Service Name</th><th>Mins Away</th><th>Bus #</th><th>My Stop #</th><th>My Service Direction</th><th>My Service Period</th></tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
+	<br>
     <div id="map"></div>
-	<br>
-	<table id="my-table">
+	<table id="detailed-data">
 		<thead>
-			<tr><th>My Service Name</th><th>My Service Period</th><th>My Service Direction</th><th>My Stop #</th><th>My Stop Seq #</th></tr>
+			<tr><th>Vehicle ID</th><th>Direction</th><th>Lat</th><th>Lng</th><th>Next Stop #</th><th>Next Stop Seq #</th><th>Distance</th><th>Mins Away</th></tr>
 		</thead>
 		<tbody>
 		</tbody>
 	</table>
-	<br>
-	<table id="data-table">
-		<thead>
-			<tr><th>Vehicle ID</th><th>Direction</th><th>Lat</th><th>Lng</th><th>Next Stop #</th><th>Next Stop Seq #</th><th>Distance</th><th>Est. Arrival</th></tr>
-		</thead>
-		<tbody>
-		</tbody>
-	</table>
-
     <script>
 		var map;
 		var route_markers = [];
 		var bus_markers = [];
-		var my_route_id = "";
+		var my_routes;
 		var my_stop_sequence = "";
 		var my_stop_lat;
 		var my_stop_lng;
 		var my_stops;
+		var bounds_orig;
+		var bounds;
 		
-		var my_service_short_name = "130";
-//		var my_service_period = "Weekday";
-		var my_service_period = "Saturday";
-//		var my_service_period = "Sunday";
-		var my_service_direction = "0";
-		var my_stop_id = "10763";
+		const route_colour = ["Maroon", "Red", "Pink", "Brown", "Orange", "Apricot", "Olive", "Yellow", "Beige", "Lime", "Green", "Mint", "Teal", "Cyan", "Navy", "Blue", "Purple", "Lavender", "Magenta", "Black", "Grey", "White"];
+		const route_text_colour = ["White", "White", "Black", "White", "White", "Black", "White", "Black", "Black", "Black", "White", "Black", "White", "Black", "White", "White", "White", "Black", "White", "White", "White", "Black"];
 
-/*		
-		var my_service_short_name = "GLKN";
-//		var my_service_period = "Weekday";
-		var my_service_period = "Saturday";
-		var my_service_direction = "0";
-		var my_stop_id = "600821";
-*/
+		var my_services = {"service":[
+			{"short_name":"130", "period":"Weekday", "direction":"0", "stop_id":"10763"},
+			{"short_name":"140", "period":"Weekday", "direction":"0", "stop_id":"10743"}
+		]};	
+/*
+		var my_services = {"service":[
+			{"short_name":"GLKN", "period":"Weekday", "direction":"0", "stop_id":"600821"}
+		]};
+	*/
+
 		function initMap() {
 			map = new google.maps.Map(document.getElementById('map'), {
 				center: {lat: -27.641270, lng: 153.049400},
-				zoom: 15
+				zoom: 15,
+				gestureHandling: 'greedy',
+				mapTypeControl: false,
+				streetViewControl: false
 			});
 
 			var trafficLayer = new google.maps.TrafficLayer();
 			trafficLayer.setMap(map);
+			
+			bounds_orig = new google.maps.LatLngBounds();
+
 
 			// get my route id
 			
-			
-//			var input_data = {serviceShortName: '" + my_service_short_name + "', servicePeriod: '" + my_service_period + "', serviceDirection: '" + my_service_direction + "'};
-			var input_data = {serviceShortName: my_service_short_name, servicePeriod: my_service_period, serviceDirection: my_service_direction};
-		//	alert(input_data);
+			var input_data = {myServices: JSON.stringify(my_services.service)};
+
 			
 			$.post("get_route_id.php", input_data, function(data, status){
-				my_route_id = data.trim();
-//				alert("aaa"+my_route_id+"bbb");
+//				alert("aaa"+data+"bbb");
+				my_routes = JSON.parse(data);
 				
 				// add the route markers
 				
 						
 				$.post("get_stops.php", input_data, function(data, status){
-			//		alert(data);
+//					alert("aaa"+data+"bbb");
 					//var my_stops = JQuery.parseJSON(data);
 					my_stops = JSON.parse(data);
 		//			alert(my_stops[0].lat);
-		//			$('#message').text(data);
+//					$('#message').text(data);
 					
 		//			deleteMarkers();
-					
-					for (var i in my_stops)
+
+					var my_services_html = "";
+		
+					// for each service
+		
+					for (var i in my_stops.services)
 					{
-						 
-
-						if (my_stops[i].id == my_stop_id)
+						// for each bus stop in each service
+					
+						for (var j in my_stops.services[i].stops)
 						{
-							my_stop_sequence = my_stops[i].sequence;
-							my_stop_lat = my_stops[i].lat;
-							my_stop_lng = my_stops[i].lng;
-							addRouteMarker(parseFloat(my_stops[i].lat), parseFloat(my_stops[i].lng), 1, my_stops[i].sequence);
-							map.setCenter({lat: parseFloat(my_stops[i].lat), lng: parseFloat(my_stops[i].lng)});
-						} else
-						{
-							addRouteMarker(parseFloat(my_stops[i].lat), parseFloat(my_stops[i].lng), 0.5, my_stops[i].sequence);
+//							alert("my stops id = " + my_stops.services[i].stops[j].id + " my services stop id = " + my_services.service[0].stop_id);
+							 
+							// enrich the stops data with distance between the stops
+							 
+							if (my_stops.services[i].stops[j].sequence > 1)
+							{
+							
+							
+							}
+							 
+							if (my_stops.services[i].stops[j].id == my_services.service[i].stop_id)
+							{
+								my_services.service[i].stop_sequence = my_stops.services[i].stops[j].sequence;
+								my_stop_lat = my_stops.services[i].stops[j].lat;
+								my_stop_lng = my_stops.services[i].stops[j].lng;
+								bounds_orig.extend({lat: parseFloat(my_stop_lat), lng: parseFloat(my_stop_lng)});
+	//							alert("my stop lat = " + my_stop_lat + " lng = " + my_stop_lng);
+								addRouteMarker(parseFloat(my_stops.services[i].stops[j].lat), parseFloat(my_stops.services[i].stops[j].lng), "M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z", route_colour[i], my_stops.services[i].stops[j].sequence);
+//								addRouteMarker(parseFloat(my_stops.services[i].stops[j].lat), parseFloat(my_stops.services[i].stops[j].lng), "M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z", route_colour[i], my_stops.services[i].stops[j].distance_to_previous.toString());
+							} else
+							{
+								addRouteMarker(parseFloat(my_stops.services[i].stops[j].lat), parseFloat(my_stops.services[i].stops[j].lng), "M14 6l-1-2H5v17h2v-7h5l1 2h7V6h-6zm4 8h-4l-1-2H7V6h5l1 2h5v6z", route_colour[i], my_stops.services[i].stops[j].sequence);
+	//							addRouteMarker(parseFloat(my_stops.services[i].stops[j].lat), parseFloat(my_stops.services[i].stops[j].lng), "M14 6l-1-2H5v17h2v-7h5l1 2h7V6h-6zm4 8h-4l-1-2H7V6h5l1 2h5v6z", route_colour[i], my_stops.services[i].stops[j].distance_to_previous.toString());
 
+							}
 						}
+						
+						my_services_html = my_services_html + '<tr><td style="background-color:' + route_colour[i] + '; color:' + route_text_colour[i] + ';">' + my_services.service[i].short_name + '</td><td style="text-align:center;"></td><td style="text-align:center;"></td><td style="text-align:center;">' + my_services.service[i].stop_sequence + ' (' + my_services.service[i].stop_id + ')</td><td style="text-align:center;">' + my_services.service[i].direction + '</td><td style="text-align:center;">' + my_services.service[i].period + '</td></tr>';
 					}
 					
-//					$('#my-table').children('tbody').html('<tr><td>' + my_service_short_name + '</td><td>' + my_service_period + '</td><td>' + my_service_direction + '</td><td>' + my_stop_id + '</td><td>' + my_stop_sequence + '</td></tr>');
-					$('#my-table').children('tbody').html('<tr><td>' + my_service_short_name + '</td><td>' + my_service_period + '</td><td>' + my_service_direction + '</td><td>' + my_stop_id + '</td><td>' + my_stop_sequence + '</td></tr>');
-
+					$('#summary').children('tbody').html(my_services_html);
 				
+					map.fitBounds(bounds_orig);
 					update_map();
 					var myVar = setInterval(update_map, 10000);
 				});		
@@ -137,18 +161,27 @@
 
 			  
 			// Adds a marker to the map and push to the array.
-			function addRouteMarker(objlat, objlng, opacity, stopid) {
-			
-				var image = 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png';
+			function addRouteMarker(objlat, objlng, svg_path, colour, stopid) {
+						
+				var icon = {
+					path: svg_path,
+					fillColor: colour,
+					fillOpacity: 1,
+					anchor: new google.maps.Point(6,20),
+					strokeWeight: 0,
+					scale: 1
+				}			
+
+			//	var image = 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png';
 
 				var marker = new google.maps.Marker({
 					position: {lat: objlat, lng: objlng},
 					label: stopid,
 					map: map,
-					icon: image
+					icon: icon
 				});
 				
-				marker.setOpacity(opacity);
+//				marker.setOpacity(opacity);
 				
 				route_markers.push(marker);
 			}
@@ -177,11 +210,22 @@
 			}
 			  
 			// Adds a marker to the map and push to the array.
-			function addBusMarker(objlat, objlng, label2) {
+			function addBusMarker(objlat, objlng, colour, label2) {
+			
+				var icon = {
+					path: "M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z",
+					fillColor: colour,
+					fillOpacity: 1,
+					anchor: new google.maps.Point(0,20),
+					strokeWeight: 0,
+					scale: 1
+				}			
+			
 				var marker = new google.maps.Marker({
 					position: {lat: objlat, lng: objlng},
 					label: label2,
-					map: map
+					map: map,
+					icon: icon
 				});
 				bus_markers.push(marker);
 			}
@@ -212,16 +256,16 @@
 	  
 			function setNoItemsInfo()
 			{
-				if ($('#data-table').length < 1)
+				if ($('#detailed-data').length < 1)
 				
 					return; //not configured.
 				
-				if ($('#data-table').children('tbody').length > 0)
+				if ($('#detailed-data').children('tbody').length > 0)
 				
-					$('#data-table').children('tbody').html("");
+					$('#detailed-data').children('tbody').html("");
 				else
 				
-					$('#data-table').append('<tbody></tbody>');
+					$('#detailed-data').append('<tbody></tbody>');
 			}	  
 				  
 			function loadTable(tableId, fields, data)
@@ -230,13 +274,21 @@
 				
 				$.each(data, function(index, item)
 				{
-					if (item['direction'] == my_service_direction)
+					if (item['direction'] == my_services.service[0].direction)
 					{
 						var row = '<tr>';
 						
 						$.each(fields, function(index, field)
 						{
-							row += '<td>' + item[field+''] + '</td>';
+							var td_attributes = "";
+							
+							if (field == "id")
+							{
+								td_attributes = ' style="background-color:' + route_colour[item['service_sequence_number']] + '; color:' + route_text_colour[item['service_sequence_number']] + ';"';
+							}
+						
+						
+							row += '<td' + td_attributes + '>' + item[field+''] + '</td>';
 						});
 						
 						rows += row + '<tr>';
@@ -245,73 +297,222 @@
 				
 				$('#' + tableId).children('tbody').html(rows);
 			}	  
+						
+			function secondsToHms(d) {
+				d = Number(d);
+				var h = Math.floor(d / 3600);
+				var m = Math.floor(d % 3600 / 60);
+				var s = Math.floor(d % 3600 % 60);
+
+				var hDisplay = h > 0 ? h + (h == 1 ? " hr, " : " hrs, ") : "";
+				var mDisplay = m > 0 ? m + (m == 1 ? " min, " : " mins, ") : "";
+				var sDisplay = s > 0 ? s + (s == 1 ? " sec" : " secs") : "";
+				return hDisplay + mDisplay + sDisplay; 
+			}			
+			
+				  
+			function haversineGreatCircleDistance() {
+			   var radians = Array.prototype.map.call(arguments, function(deg) { return deg/180.0 * Math.PI; });
+			   var lat1 = radians[0], lon1 = radians[1], lat2 = radians[2], lon2 = radians[3];
+//			   var R = 6372.8; // km
+			   var R = 6371000; // m
+			   var dLat = lat2 - lat1;
+			   var dLon = lon2 - lon1;
+			   var a = Math.sin(dLat / 2) * Math.sin(dLat /2) + Math.sin(dLon / 2) * Math.sin(dLon /2) * Math.cos(lat1) * Math.cos(lat2);
+			   var c = 2 * Math.asin(Math.sqrt(a));
+			   return parseInt(R * c);
+			}	  
+	  
 	  
 			function update_map() {
 		  		
-				var input_data = {serviceShortName: my_route_id, myLat: my_stop_lat, myLng: my_stop_lng};
-//				alert("aaa"+my_route_id+"bbb");
+//				var input_data = {serviceShortName: my_routes.mainid, myLat: my_stop_lat, myLng: my_stop_lng, myRoutes: JSON.stringify(my_routes.id)};
+				var input_data = {myLat: my_stop_lat, myLng: my_stop_lng, myRoutes: JSON.stringify(my_routes.services)};
 				
 				$.post("get_buses.php", input_data, function(data, status){
+//					alert("aaa"+data+"bbb");
 					var obj = JSON.parse(data);
 //					$('#message').text(data);
 					
 					deleteBusMarkers();
-					var map_centered = false;
+					var fred = "";
+					bounds = new google.maps.LatLngBounds(bounds_orig.getSouthWest(), bounds_orig.getNorthEast());
 
+					// for each bus
 					
 					for (var i in obj)
 					{
-						// if the bus is going in my direction
+
+						// find the service that the route of the bus is in
 						
-						if (obj[i].direction == my_service_direction)
-						{					
-							var bus_before_my_stop = false;
-							
-							for (var j in my_stops)
+						for (var j in my_routes.services)
+						{
+							var route_in_this_service = false;
+						
+							for (var k in my_routes.services[j].all_id)
 							{
-								// is the buses next stop is found in the list of stops
-								
-								if (my_stops[j].id == obj[i].stop_id)
+								if (my_routes.services[j].all_id[k] == obj[i].route_id)
 								{
-									obj[i].stop_sequence = my_stops[j].sequence;
-								
-									// if the buses next stop sequence is lower than my bus stops sequence then we can catch this bus
-									if (parseInt(obj[i].stop_sequence) <= parseInt(my_stop_sequence))
-									
-										bus_before_my_stop = true;
-									
+									route_in_this_service = true;
+									obj[i].service_sequence_number = j;
 								}
 							}
 							
-							if (bus_before_my_stop)
+							// if the route of the bus is in this service
 							
-								addBusMarker(parseFloat(obj[i].lat), parseFloat(obj[i].lng), obj[i].id);
-							else
-							
-								obj[i].arrival_time = '';
+							if (route_in_this_service)
+							{
+								// if the bus is going in my direction for this service
 								
-							obj[i].distance = obj[i].distance + " m";
-//							addBusMarker(parseFloat(obj[i].lat), parseFloat(obj[i].lng), obj[i].stop_id);
-//							addBusMarker(parseFloat(obj[i].lat), parseFloat(obj[i].lng), obj[i].direction);
+								if (obj[i].direction == my_services.service[j].direction)
+								{					
+									var bus_before_my_stop = false;
+									
+									//for (var k in my_stops)
+									for (var k in my_stops.services[j].stops)
+									{
+									
+									
+										// if the buses next stop is found in the list of stops for this service
+										
+										if (my_stops.services[j].stops[k].id == obj[i].stop_id)
+										{
+											obj[i].stop_sequence = my_stops.services[j].stops[k].sequence;
+											obj[i].stop_lat = my_stops.services[j].stops[k].lat;
+											obj[i].stop_lng = my_stops.services[j].stops[k].lng;
+										
+											// if the buses next stop sequence is lower than my bus stops sequence then we can catch this bus
+											if (parseInt(obj[i].stop_sequence) <= parseInt(my_services.service[j].stop_sequence))
+											{											
+												addBusMarker(parseFloat(obj[i].lat), parseFloat(obj[i].lng), route_colour[j], obj[i].id);
+												bounds.extend({lat: parseFloat(obj[i].lat), lng: parseFloat(obj[i].lng)});
+
+		//										break;
+											}
+											
+										}
+										
+										
+									}
+									
+									// enrich the bus data with distance from my stop, by adding together the distances of all stops inbetween
+
+									var distance = 0;
+									var distance_calc = "";
+//									fred = fred + "~" + obj[i].id + "~~" + my_services.service[j].stop_sequence + "~~~" + obj[i].stop_sequence;
+									var additional_seconds_per_stop = 0;
+									
+									if (parseInt(my_services.service[j].stop_sequence) < parseInt(obj[i].stop_sequence))
+									{
+										var stop_num;
+										
+										for (stop_num = parseInt(my_services.service[j].stop_sequence); stop_num < parseInt(obj[i].stop_sequence); stop_num++)
+
+											if (stop_num < my_stops.services[j].stops.length)
+											{
+												distance_calc = distance_calc + "+" + parseInt(my_stops.services[j].stops[stop_num].distance_to_previous).toString();
+												distance = distance + parseInt(my_stops.services[j].stops[stop_num].distance_to_previous);
+												additional_seconds_per_stop = additional_seconds_per_stop + 40;
+											}
+											
+										// the distance from the bus to the next stop is removed
+										
+										distance_calc = distance_calc + "-" + haversineGreatCircleDistance(obj[i].lat, obj[i].lng, obj[i].stop_lat, obj[i].stop_lng).toString();
+										distance = distance - haversineGreatCircleDistance(obj[i].lat, obj[i].lng, obj[i].stop_lat, obj[i].stop_lng);												
+									}
+							
+									if (parseInt(obj[i].stop_sequence) < parseInt(my_services.service[j].stop_sequence))
+									{
+										var stop_num;
+										
+										for (stop_num = parseInt(obj[i].stop_sequence); stop_num < parseInt(my_services.service[j].stop_sequence); stop_num++)
+
+											if (stop_num < my_stops.services[j].stops.length)
+											{
+												distance_calc = distance_calc + "+" + parseInt(my_stops.services[j].stops[stop_num].distance_to_previous).toString();
+												distance = distance + parseInt(my_stops.services[j].stops[stop_num].distance_to_previous);
+												additional_seconds_per_stop = additional_seconds_per_stop + 40;
+											}
+
+										// the distance from the bus to the next stop is added
+										
+										distance_calc = distance_calc + "+" + haversineGreatCircleDistance(obj[i].lat, obj[i].lng, obj[i].stop_lat, obj[i].stop_lng).toString();
+										distance = distance + haversineGreatCircleDistance(obj[i].lat, obj[i].lng, obj[i].stop_lat, obj[i].stop_lng);												
+									}
+							
+									if (parseInt(obj[i].stop_sequence) == parseInt(my_services.service[j].stop_sequence))
+									{
+										distance_calc = distance_calc + "+" + haversineGreatCircleDistance(obj[i].lat, obj[i].lng, obj[i].stop_lat, obj[i].stop_lng).toString();
+										distance = distance + haversineGreatCircleDistance(obj[i].lat, obj[i].lng, obj[i].stop_lat, obj[i].stop_lng);												
+									}
+									
+//									$('#message').text(fred);
+
+									obj[i].distance = "";
+
+									if (obj[i].stop_sequence != "")
+									{
+										obj[i].distance = distance + " m (" + distance_calc + ")";
+	//									obj[i].distance = distance + " m";
+									}
+										
+									var speed_in_metres_per_second = 60 / 3.6;
+									obj[i].arrival_time_in_seconds = (distance / speed_in_metres_per_second) + additional_seconds_per_stop;
+									obj[i].arrival_time = secondsToHms(obj[i].arrival_time_in_seconds);
+
+									
+								}
+
+					
+							}
+							
 						}
 	
 					
-	/*				
-						if (obj[i].direction == my_service_direction)
-						
-							addBusMarker(parseFloat(obj[i].lat), parseFloat(obj[i].lng), obj[i].stop_id);
-//							addBusMarker(parseFloat(obj[i].lat), parseFloat(obj[i].lng), obj[i].direction);
-		*/
-//						 if (!map_centered)
-	//					 {
-		//					map.setCenter(bus_markers[0].getPosition());
-			//				map_centered = true;
-				//		 }
 					}
+
+					
+					for (var i in my_services.service)
+					{
+						// find the closest bus
+						
+						var closest_bus_arrival_time_in_seconds = 9999;
+						var closest_bus_id;
+						
+						for (var j in obj)
+						{
+							if (obj[j].service_sequence_number == i)
+							{
+								if (obj[j].stop_sequence != "" && parseInt(obj[j].stop_sequence) <= parseInt(my_services.service[i].stop_sequence) && obj[j].arrival_time_in_seconds < closest_bus_arrival_time_in_seconds)
+								{
+									closest_bus_arrival_time_in_seconds = obj[j].arrival_time_in_seconds;
+									closest_bus_id = obj[j].id;
+								}
+							}
+						}
+						
+						if (closest_bus_arrival_time_in_seconds < 9999)
+						{
+//							$('#summary tr:eq(1) td:eq(' + parseInt(i) + ')').text(secondsToHms(closest_bus_arrival_time_in_seconds));
+	//						$('#summary tr:eq(2) td:eq(' + parseInt(i) + ')').text(closest_bus_id);
+							$('#summary tr:eq(' + (parseInt(i) + 1) + ') td:eq(1)').text(secondsToHms(closest_bus_arrival_time_in_seconds));
+							$('#summary tr:eq(' + (parseInt(i) + 1) + ') td:eq(2)').text(closest_bus_id);
+						} else
+						{
+//							$('#summary tr:eq(1) td:eq(' + parseInt(i) + ')').text("");
+	//						$('#summary tr:eq(2) td:eq(' + parseInt(i) + ')').text("");
+							$('#summary tr:eq(' + (parseInt(i) + 1) + ') td:eq(1)').text("");
+							$('#summary tr:eq(' + (parseInt(i) + 1) + ') td:eq(2)').text("");
+						}
+					}				
+
+//					summary_html = summary_html + "</table>";
+					
 					
 					setNoItemsInfo();
-					loadTable('data-table', ['id', 'direction', 'lat', 'lng', 'stop_id', 'stop_sequence', 'distance', 'arrival_time'], obj);
+					loadTable('detailed-data', ['id', 'direction', 'lat', 'lng', 'stop_id', 'stop_sequence', 'distance', 'arrival_time'], obj);
 
+					map.fitBounds(bounds);
 
 					
 				});		
