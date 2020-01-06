@@ -101,13 +101,9 @@
 						
 				$.post("get_stops.php", input_data, function(data, status){
 //					alert("aaa"+data+"bbb");
-					//var my_stops = JQuery.parseJSON(data);
 					my_stops = JSON.parse(data);
-		//			alert(my_stops[0].lat);
 //					$('#message').text(data);
 					
-		//			deleteMarkers();
-
 					var my_services_html = "";
 		
 					// for each service
@@ -121,12 +117,6 @@
 //							alert("my stops id = " + my_stops.services[i].stops[j].id + " my services stop id = " + my_services.service[0].stop_id);
 							 
 							// enrich the stops data with distance between the stops
-							 
-							if (my_stops.services[i].stops[j].sequence > 1)
-							{
-							
-							
-							}
 							 
 							if (my_stops.services[i].stops[j].id == my_services.service[i].stop_id)
 							{
@@ -172,16 +162,12 @@
 					scale: 1
 				}			
 
-			//	var image = 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png';
-
 				var marker = new google.maps.Marker({
 					position: {lat: objlat, lng: objlng},
 					label: stopid,
 					map: map,
 					icon: icon
 				});
-				
-//				marker.setOpacity(opacity);
 				
 				route_markers.push(marker);
 			}
@@ -326,7 +312,6 @@
 	  
 			function update_map() {
 		  		
-//				var input_data = {serviceShortName: my_routes.mainid, myLat: my_stop_lat, myLng: my_stop_lng, myRoutes: JSON.stringify(my_routes.id)};
 				var input_data = {myLat: my_stop_lat, myLng: my_stop_lng, myRoutes: JSON.stringify(my_routes.services)};
 				
 				$.post("get_buses.php", input_data, function(data, status){
@@ -459,16 +444,9 @@
 									var speed_in_metres_per_second = 60 / 3.6;
 									obj[i].arrival_time_in_seconds = (distance / speed_in_metres_per_second) + additional_seconds_per_stop;
 									obj[i].arrival_time = secondsToHms(obj[i].arrival_time_in_seconds);
-
-									
 								}
-
-					
 							}
-							
 						}
-	
-					
 					}
 
 					
@@ -493,27 +471,19 @@
 						
 						if (closest_bus_arrival_time_in_seconds < 9999)
 						{
-//							$('#summary tr:eq(1) td:eq(' + parseInt(i) + ')').text(secondsToHms(closest_bus_arrival_time_in_seconds));
-	//						$('#summary tr:eq(2) td:eq(' + parseInt(i) + ')').text(closest_bus_id);
 							$('#summary tr:eq(' + (parseInt(i) + 1) + ') td:eq(1)').text(secondsToHms(closest_bus_arrival_time_in_seconds));
 							$('#summary tr:eq(' + (parseInt(i) + 1) + ') td:eq(2)').text(closest_bus_id);
 						} else
 						{
-//							$('#summary tr:eq(1) td:eq(' + parseInt(i) + ')').text("");
-	//						$('#summary tr:eq(2) td:eq(' + parseInt(i) + ')').text("");
 							$('#summary tr:eq(' + (parseInt(i) + 1) + ') td:eq(1)').text("");
 							$('#summary tr:eq(' + (parseInt(i) + 1) + ') td:eq(2)').text("");
 						}
 					}				
 
-//					summary_html = summary_html + "</table>";
-					
-					
 					setNoItemsInfo();
 					loadTable('detailed-data', ['id', 'direction', 'lat', 'lng', 'stop_id', 'stop_sequence', 'distance', 'arrival_time'], obj);
 
 					map.fitBounds(bounds);
-
 					
 				});		
 			}

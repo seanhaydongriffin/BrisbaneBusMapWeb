@@ -37,34 +37,20 @@ foreach ($feed->getEntityList() as $entity)
 		{
 			foreach($routes as $route)
 			{
-
-			
-			
-			
 				$bus_found_in_my_routes = 0;
 				  
 				foreach($route->all_id as $route_id)
 				{
 					if ($entity->getVehicle()->getTrip()->getRouteId() === $route_id)
 					{
-	//					echo $entity->getVehicle()->getTrip()->getRouteId();
 						$bus_found_in_my_routes = 1;
 					}
 				}
 
 				if ($bus_found_in_my_routes === 1)
-				  
-				  
-				  
-		//		  if ($entity->getVehicle()->getTrip()->getRouteId() == $_POST['serviceShortName'])
-		//		  if (strpos($entity->getVehicle()->getTrip()->getRouteId(), '130-') === 0)
-		//		  if (strpos($entity->getVehicle()->getTrip()->getRouteId(), 'GCN-') === 0)
 				{
 					if ($entity->getVehicle()->hasPosition())
 					{
-		//				echo $entity->getVehicle()->getStopId();
-			//			echo $entity->getVehicle()->getCurrentStopSequence();
-						
 						$sql = "SELECT trip_ids, trip_direction_ids FROM trips_merged WHERE trip_ids like '%" . substr($entity->getVehicle()->getTrip()->getTripId(), 0, 8) . "%'";
 						$result = $conn->query($sql);
 
@@ -77,7 +63,6 @@ foreach ($feed->getEntityList() as $entity)
 						if ($result->num_rows > 0) {
 							// output data of each row
 							while($row = $result->fetch_assoc()) {
-						//        echo 'routeid' => $row["route_id"];
 								//echo trim($row["trip_ids"]);
 			
 								$trip_ids = explode("~", $row["trip_ids"]);
@@ -86,26 +71,15 @@ foreach ($feed->getEntityList() as $entity)
 								
 								$direction_ids = explode("~", $row["trip_direction_ids"]);
 								$direction_id = $direction_ids[$index];
-		//						echo "~" . $direction_id;
 								
 								$bus_id = $entity->getVehicle()->getVehicle()->getId();
 								$bus_id_tmp = explode("_", $bus_id);
 								$bus_id = end($bus_id_tmp);
 								
-//								$distance = (int)haversineGreatCircleDistance($_POST['myLat'], $_POST['myLng'], $entity->getVehicle()->getPosition()->getLatitude(), $entity->getVehicle()->getPosition()->getLongitude());
-								
-								// estimated arrival time based on an average speed of 60km/h
-//								$speed_in_metres_per_second = 60 / 3.6;
-	//							$time_in_seconds = $distance / $speed_in_metres_per_second;
-		//						$arrival_time = secToHR($time_in_seconds);
-								
-//								$tmparr = ['id' => $bus_id, 'route_id' => $entity->getVehicle()->getTrip()->getRouteId(), 'stop_id' => $entity->getVehicle()->getStopId(), 'stop_sequence' => '', 'direction' => $direction_id, 'lat' => $entity->getVehicle()->getPosition()->getLatitude(), 'lng' => $entity->getVehicle()->getPosition()->getLongitude(), 'distance' => $distance, 'arrival_time' => $arrival_time];
 								$tmparr = ['id' => $bus_id, 'route_id' => $entity->getVehicle()->getTrip()->getRouteId(), 'stop_id' => $entity->getVehicle()->getStopId(), 'stop_sequence' => '', 'direction' => $direction_id, 'lat' => $entity->getVehicle()->getPosition()->getLatitude(), 'lng' => $entity->getVehicle()->getPosition()->getLongitude()];
 								array_push($newarr, $tmparr);
-				
 							}
 						}
-						
 					}
 				}
 			}
